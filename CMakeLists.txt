@@ -26,10 +26,7 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost COMPONENTS date_time)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-find_package(Hidapi REQUIRED)
-include_directories(${HIDAPI_INCLUDE_DIRS})
-set(LIBS ${LIBS} ${HIDAPI_LIBRARIES})
+
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 

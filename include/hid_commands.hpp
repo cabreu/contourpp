@@ -4,17 +4,9 @@
 #include <string>
 #include <vector>
 
-#ifdef CONTOURPP_USE_LIBHID
 // Use libhid - untested
 struct HIDInterface_t;
 typedef HIDInterface_t hid_device;
-#else
-// Use hidapi
-extern "C" {
-  struct hid_device_;
-  typedef struct hid_device_ hid_device; /**< opaque hidapi structure */
-}
-#endif
 
 namespace contourpp
 {

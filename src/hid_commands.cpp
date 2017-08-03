@@ -10,12 +10,9 @@
 #include <iostream>
 #endif
 
-#ifdef CONTOURPP_USE_LIBHID
 #define HAVE_STDBOOL_H 1
 #include <hid.h>
-#else
-#include <hidapi/hidapi.h>
-#endif
+
 
 #include "hid_commands.hpp"
 
@@ -41,11 +38,7 @@ static const char LF  = '\n';
 
 static inline void test_ret(const char* name, int ret)
 {
-#ifdef CONTOURPP_USE_LIBHID
   if (ret != 0)
-#else
-  if (ret < 0)
-#endif
   {
     std::stringstream sstream;
     sstream << name << " failed with return code " << ret
@@ -101,11 +94,7 @@ static inline void read(hid_device* hid, std::vector<char>& ret)
     for (ui = uibuf; ui < ue; ++ui)
       *ui = 0;
 
-#ifdef CONTOURPP_USE_LIBHID
     test_ret("hid_interrupt_read()", ::hid_interrupt_read(hid, 0x81, buf, blocksize, 5000));
-#else
-    test_ret("hid_read()", ::hid_read_timeout(hid, (unsigned char*)buf, blocksize, 5000));
-#endif
 
     n = (buf[3] < maxpayload)? buf[3] : maxpayload;
     for (const char *i(b), *e(b + n); i < e; ++i)
@@ -125,11 +114,7 @@ static inline void write(hid_device* const& hid, const char& c)
   std::cerr << ">>> " << interface::to_string(&c, (&c) + 1) << std::endl;
 #endif
 
-#ifdef CONTOURPP_USE_LIBHID
   test_ret("hid_interrupt_write()", ::hid_interrupt_write(hid, 0x01, buf, 5, 5000));
-#else
-  test_ret("hid_write()", ::hid_write(hid, (unsigned char*)buf, 5));
-#endif
 }
 
 // Static struct for initialization / cleanup of hidapi (or libhid).
@@ -138,11 +123,7 @@ struct HidInitializer
   bool initialized_;
 
   HidInitializer() : initialized_(false) {}
-#ifdef CONTOURPP_USE_LIBHID
   ~HidInitializer() { if (initialized_) ::hid_cleanup(); }
-#else
-  ~HidInitializer() { if (initialized_) ::hid_exit(); }
-#endif
 
   inline void init() {
     if (initialized_)
@@ -167,7 +148,7 @@ bool interface::open()
   s_initializer.init();
   data_.reserve(5 * size_t(blocksize));
 
-#ifdef CONTOURPP_USE_LIBHID
+
   HIDInterfaceMatcher matcher = { vendor_id, 0x0000, NULL, NULL, 0 };
   int open_result = -1;
   if (!(hid_ = ::hid_new_HIDInterface()))
@@ -183,12 +164,6 @@ bool interface::open()
 #ifdef CONTOURPP_DEBUG_HID_COMM
   std::cerr << "/// Found " << std::hex << device_ids[i] << std::dec << std::endl;
 #endif
-#else
-  for (int i = 0; device_ids[i] && !hid_; ++i)
-    hid_ = ::hid_open(vendor_id, device_ids[i], NULL);
-  if (!hid_)
-    throw std::runtime_error("hid_open() failed.");
-#endif
 
   return true;
 }
@@ -198,12 +173,9 @@ bool interface::close()
   if (!hid_)
     return false;
 
-#ifdef CONTOURPP_USE_LIBHID
   test_ret("hid_close()", ::hid_close(hid_));
   ::hid_delete_HIDInterface(&hid_);
-#else
-  ::hid_close(hid_);
-#endif
+
 
   hid_ = NULL;
   state_ = establish;
